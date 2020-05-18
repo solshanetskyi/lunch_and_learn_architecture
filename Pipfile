@@ -7,6 +7,15 @@ verify_ssl = true
 
 [packages]
 pytest = "*"
+sqlalchemy = "*"
+base = "*"
+mysqlclient = "*"
+sqlalchemy-stubs = "*"
+sqlacodegen = "*"
+importlib-metadata = "*"
+
+
+
 
 [requires]
 python_version = "3.8"

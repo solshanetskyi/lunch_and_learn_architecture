@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from src.domain import repository
 from src.domain.model import InvoiceProfileLine, InvoiceProfileLineType, ScheduleType, InvoiceProfile
-from src.service_layer import services
+from src.service_layer import services, unit_of_work
 
 
 class FakeRepository(repository.AbstractRepository):
@@ -24,6 +24,19 @@ class FakeSession:
 
     def commit(self):
         self.committed = True
+
+
+class FakeUnitOfWork(unit_of_work.AbstractUnitOfWork):
+
+    def __init__(self):
+        self.products = FakeRepository([])
+        self.committed = False
+
+    def commit(self):
+        self.committed = True
+
+    def rollback(self):
+        pass
 
 
 def test_copy_profile():

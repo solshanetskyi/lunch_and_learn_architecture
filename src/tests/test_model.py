@@ -4,8 +4,8 @@ from decimal import Decimal
 import pytest
 
 from src.domain.errors import CloningProfileWithRecurringTimeEntries
-from src.domain.model import InvoiceProfileLine, InvoiceProfileLineType, Schedule, ScheduleType, InvoiceProfile
-from src.domain.service import copy_profile
+from src.domain.model import InvoiceProfileLine, InvoiceProfileLineType, Schedule, ScheduleType, InvoiceProfile, \
+    copy_profile
 
 
 def test_amount_without_taxes():

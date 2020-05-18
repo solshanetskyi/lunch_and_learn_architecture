@@ -25,8 +25,15 @@ class InvoiceProfileLine:
     description: str
     quantity: int
     unit_cost: Decimal
-    tax_name: str
-    tax_amount: Decimal
+    tax_name: str = None
+    tax_amount: Decimal = 0
+
+    @property
+    def amount(self):
+        amount_without_taxes = Decimal(self.unit_cost) * Decimal(self.quantity)
+        taxes = amount_without_taxes * self.tax_amount
+
+        return amount_without_taxes + taxes
 
 
 @dataclass(frozen=True)

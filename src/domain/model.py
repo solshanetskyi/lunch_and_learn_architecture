@@ -4,6 +4,8 @@ from decimal import Decimal
 from enum import Enum
 from typing import Iterable
 
+from src.domain.errors import CloningProfileWithRecurringTimeEntries, CloningProfileWithRecurringExpenses
+
 
 class ScheduleType(Enum):
     Weekly = 1,
@@ -56,13 +58,13 @@ class Schedule:
 
 
 class InvoiceProfile:
-    def __init__(self, lines: Iterable[InvoiceProfileLine], client_id, schedule):
+    def __init__(self, lines: Iterable[InvoiceProfileLine], client_id, schedule=None, profile_id=None):
         self.client_id = client_id
         self.schedule = schedule
         self.lines = lines
         self._amount = self._calculate_amount()
         self.schedule = schedule
-        self.id = None
+        self.id = profile_id
 
     def update_schedule(self, schedule):
         self.schedule = schedule
@@ -73,3 +75,15 @@ class InvoiceProfile:
 
     def _calculate_amount(self):
         return sum(item.amount for item in self.lines)
+
+
+def copy_profile(profile: InvoiceProfile):
+    profile_item_types = set(line.type for line in profile.lines)
+
+    if InvoiceProfileLineType.UnbilledTimeEntry.value in profile_item_types:
+        raise CloningProfileWithRecurringTimeEntries()
+
+    if InvoiceProfileLineType.UnbilledExpense.value in profile_item_types:
+        raise CloningProfileWithRecurringExpenses()
+
+    return InvoiceProfile(profile.lines, profile.client_id, None)

@@ -13,9 +13,8 @@ mysqlclient = "*"
 sqlalchemy-stubs = "*"
 sqlacodegen = "*"
 importlib-metadata = "*"
-
-
-
+flask = "*"
+app = "*"
 
 [requires]
 python_version = "3.8"

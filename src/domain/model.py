@@ -62,6 +62,7 @@ class InvoiceProfile:
         self.lines = lines
         self._amount = self._calculate_amount()
         self.schedule = schedule
+        self.id = None
 
     def update_schedule(self, schedule):
         self.schedule = schedule

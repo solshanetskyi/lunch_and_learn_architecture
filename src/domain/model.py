@@ -1,8 +1,10 @@
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from enum import Enum
 from typing import Iterable
+
+from src.domain.errors import CloningProfileWithRecurringTimeEntries, CloningProfileWithRecurringExpenses
 
 
 class ScheduleType(Enum):
@@ -18,28 +20,70 @@ class InvoiceProfileLineType(Enum):
     UnbilledExpense = 4
 
 
-@dataclass(frozen=True)
+@dataclass
 class InvoiceProfileLine:
     name: str
-    type: InvoiceProfileLineType
     description: str
+    type: InvoiceProfileLineType
     quantity: int
     unit_cost: Decimal
-    tax_name: str
-    tax_amount: Decimal
+    tax_name: str = None
+    tax_amount: Decimal = 0
+
+    @property
+    def amount(self):
+        amount_without_taxes = Decimal(self.unit_cost) * Decimal(self.quantity)
+        taxes = amount_without_taxes * self.tax_amount
+
+        return amount_without_taxes + taxes
 
 
-@dataclass(frozen=True)
 class Schedule:
-    start_date: date
-    last_occurrence_date: date
-    schedule_type: ScheduleType
-    schedule_multiplier: int
-    next_occurrence_date: date
+    def __init__(self, start_date, last_occurrence_date, schedule_type, schedule_multiplier):
+        self.start_date = start_date
+        self.last_occurrence_date = last_occurrence_date
+        self.schedule_type = schedule_type
+        self.schedule_multiplier = schedule_multiplier
+        self._next_occurrence_date = self._calculate_next_occurrence_date()
+
+    @property
+    def next_occurrence_date(self):
+        return self._calculate_next_occurrence_date()
+
+    def _calculate_next_occurrence_date(self):
+        if not self.last_occurrence_date:
+            return self.start_date
+
+        return self.last_occurrence_date + timedelta(weeks=1 * self.schedule_multiplier)
 
 
 class InvoiceProfile:
-    def __init__(self, lines: Iterable[InvoiceProfileLine], schedule, client_id):
+    def __init__(self, lines: Iterable[InvoiceProfileLine], client_id, schedule=None, profile_id=None):
         self.client_id = client_id
         self.schedule = schedule
         self.lines = lines
+        self._amount = self._calculate_amount()
+        self.schedule = schedule
+        self.id = profile_id
+
+    def update_schedule(self, schedule):
+        self.schedule = schedule
+
+    @property
+    def amount(self):
+        return self._amount
+
+    def _calculate_amount(self):
+        return sum(item.amount for item in self.lines)
+
+
+def copy_profile(profile: InvoiceProfile):
+    profile_item_types = set(line.type for line in profile.lines)
+
+    if InvoiceProfileLineType.UnbilledTimeEntry.value in profile_item_types:
+        raise CloningProfileWithRecurringTimeEntries()
+
+    if InvoiceProfileLineType.UnbilledExpense.value in profile_item_types:
+        raise CloningProfileWithRecurringExpenses()
+
+    return InvoiceProfile(profile.lines, profile.client_id, None)
